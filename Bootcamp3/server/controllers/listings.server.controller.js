@@ -57,28 +57,79 @@ exports.read = function(req, res) {
 exports.update = function(req, res) {
   var listing = req.listing;
 
-  /* Replace the listings's properties with the new properties found in req.body */
- 
-  /*save the coordinates (located in req.results if there is an address property) */
- 
-  /* Save the listing */
+  // Validate Request
+  if(!req.body) {
+    return res.status(400).send(err);
+  }
 
+  Listing.findById( 
+    listing.id, 
+    function(err) {
+      if (err) 
+        res.status(404).send(err);
+  });
+
+  /* Replace the listings's properties with the new properties found in req.body */
+  listing.code = req.body.code;
+  listing.name = req.body.name;
+
+  if(req.body.address)
+    listing.address = req.body.address;
+
+  /*save the coordinates (located in req.results if there is an address property) */
+  if(req.results) {
+    listing.coordinates = {
+      latitude: req.results.lat, 
+      longitude: req.results.lng
+    };
+  }
+
+  /* Save the listing */
+  listing.save(function(err) {
+    if(err) {
+      console.log(err);
+      res.status(400).send(err);
+    } else {
+      res.json(listing);
+      console.log(listing)
+    }
+  });
 };
 
 /* Delete a listing */
 exports.delete = function(req, res) {
   var listing = req.listing;
 
-  /* Add your code to remove the listins */
-
+  /* Add your code to remove the listings */
+  Listing.findOneAndDelete( 
+    {_id : listing.id}, 
+    {new: false}, 
+    function(err, listing) {
+      if (err) {
+        console.log(err);
+        res.status(400).send(err);
+      }
+      else {
+        res.json(listing);
+      }
+  });
 };
 
 /* Retreive all the directory listings, sorted alphabetically by listing code */
 exports.list = function(req, res) {
   /* Add your code */
-};
 
-/* 
+  Listing.find({}).sort('code').exec(function(err, listing) {
+      if (err) { 
+        console.log(err);
+        res.status(400).send(err);
+      }
+      else {
+        res.json(listing);
+      }
+  });
+};
+ /* 
   Middleware: find a listing by its ID, then pass it to the next request handler. 
 
   HINT: Find the listing using a mongoose query, 
